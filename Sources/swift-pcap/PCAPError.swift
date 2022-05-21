@@ -21,6 +21,12 @@ public struct PCAPError: Error, RawRepresentable, CustomStringConvertible {
         description = rawValue
     }
 
+    /// Construct an error from the given character pointer
+    @inlinable
+    public init(_ pointer: UnsafePointer<CChar>?) {
+        description = pointer.map { String(cString: $0) } ?? "no error"
+    }
+
     /// Construct an error from the given code
     @inlinable
     public init(code: CInt) {
