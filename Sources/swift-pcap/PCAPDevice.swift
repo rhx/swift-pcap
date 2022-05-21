@@ -10,6 +10,9 @@ import CLibPCap
 public final class PCAPDevice {
     /// The underlying `libpcap` handle
     public var handle: UnsafeMutablePointer<pcap_t>! = nil
+    /// The underlying error
+    @inlinable
+    public var error: PCAPError { PCAPError(pcap_geterr(handle)) }
     /// A buffer holding the last error that occurred
     @usableFromInline
     var errorBuffer = [CChar](repeating: 0, count: Int(PCAP_ERRBUF_SIZE)+1)
@@ -25,9 +28,52 @@ public final class PCAPDevice {
         guard let ptr = errorBuffer.withUnsafeMutableBufferPointer({ (buffer: inout UnsafeMutableBufferPointer<CChar>) -> UnsafeMutablePointer<pcap_t>? in
             pcap_open_live(device, CInt(snapshotLength), isPromiscuous ? 1 : 0, CInt(timeout), buffer.baseAddress)
         }) else {
-            throw PCAPError(rawValue: String(cString: errorBuffer))
+            throw PCAPError(errorBuffer)
         }
         handle = ptr
+    }
+
+    /// Open a saved capture file for offline processing
+    /// - Parameters:
+    ///  - file: Name of the file to open
+    @inlinable
+    public init(file: UnsafePointer<CChar>? = nil) throws {
+        guard let ptr = errorBuffer.withUnsafeMutableBufferPointer({ (buffer: inout UnsafeMutableBufferPointer<CChar>) -> UnsafeMutablePointer<pcap_t>? in
+            pcap_open_offline(file, buffer.baseAddress)
+        }) else {
+            throw PCAPError(errorBuffer)
+        }
+        handle = ptr
+    }
+
+    /// Compile a filter expression
+    /// - Parameters:
+    ///  - expression: The filter expression to compile
+    ///  - doOptimize: Optimize the filter expression if `true`
+    ///  - netmask: The netmask to use for the filter expression
+    /// - Returns: The compiled program or `nil` if unsuccessful
+    @inlinable
+    public func compile(filterExpression expression: UnsafePointer<CChar>? = nil, doOptimize: Bool = true, netmask: bpf_u_int32 = 0) -> BPFProgram? {
+        var filter = bpf_program()
+        guard pcap_compile(handle, &filter, expression, doOptimize ? 1 : 0, netmask) == 0 else {
+            return nil
+        }
+        return BPFProgram(filter)
+    }
+
+    /// Set the filter to be used
+    /// - Parameters:
+    ///  - filter: The filter to use
+    @inlinable
+    public func setFilter(_ filter: BPFProgram) {
+        pcap_setfilter(handle, &filter.bpfProgram)
+    }
+
+    /// Print the last error to `stderr`
+    /// - Parameter prefix: The text to prefix the error message with
+    @inlinable
+    public func printError(prefix: String = "pcap error") {
+        pcap_perror(handle, prefix)
     }
 
     deinit {
