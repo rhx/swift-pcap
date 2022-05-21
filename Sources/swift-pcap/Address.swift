@@ -9,7 +9,7 @@ import CLibPCap
 /// Representation of a network interface
 public struct Address: CustomStringConvertible {
     /// A pointer to the underlying PCAP address type
-    public var pcapAddress: UnsafeMutablePointer<pcap_addr_t>
+    public let pcapAddress: UnsafeMutablePointer<pcap_addr_t>
 
     /// Designated initialiser
     /// - Parameter address: The address pointer to wrap
