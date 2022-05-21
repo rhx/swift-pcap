@@ -50,7 +50,7 @@ public final class PCAPDevice {
     ///  - netmask: The netmask to use for the filter expression
     /// - Returns: The compiled program or `nil` if unsuccessful
     @inlinable
-    public func compile(filterExpression expression: UnsafePointer<CChar>? = nil, doOptimize: Bool = true, netmask: bpf_u_int32 = 0) -> BPFProgram? {
+    public func compile(filterExpression expression: UnsafePointer<CChar>? = nil, doOptimize: Bool = true, netmask: bpf_u_int32 = PCAP_NETMASK_UNKNOWN) -> BPFProgram? {
         var filter = bpf_program()
         guard pcap_compile(handle, &filter, expression, doOptimize ? 1 : 0, netmask) == 0 else {
             return nil
