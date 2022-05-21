@@ -13,9 +13,6 @@ public final class PCAPDevice {
     /// The underlying error
     @inlinable
     public var error: PCAPError { PCAPError(pcap_geterr(handle)) }
-    /// A buffer holding the last error that occurred
-    @usableFromInline
-    var errorBuffer = [CChar](repeating: 0, count: Int(PCAP_ERRBUF_SIZE)+1)
 
     /// Open a device for live capturing
     /// - Parameters:
@@ -25,12 +22,12 @@ public final class PCAPDevice {
     ///   - timeout: The packet buffer timeout in milliseconds
     @inlinable
     public init(liveDevice device: UnsafePointer<CChar>? = nil, snapshotLength: Int = 1500, isPromiscuous: Bool = true, timeout: Int = 500) throws {
-        guard let ptr = errorBuffer.withUnsafeMutableBufferPointer({ (buffer: inout UnsafeMutableBufferPointer<CChar>) -> UnsafeMutablePointer<pcap_t>? in
-            pcap_open_live(device, CInt(snapshotLength), isPromiscuous ? 1 : 0, CInt(timeout), buffer.baseAddress)
-        }) else {
-            throw PCAPError(errorBuffer)
+        handle = try withUnsafeTemporaryAllocation(of: CChar.self, capacity: Int(PCAP_ERRBUF_SIZE)+1) { buffer in
+            guard let ptr = pcap_open_live(device, CInt(snapshotLength), isPromiscuous ? 1 : 0, CInt(timeout), buffer.baseAddress) else {
+                throw PCAPError(buffer.baseAddress)
+            }
+            return ptr
         }
-        handle = ptr
     }
 
     /// Open a saved capture file for offline processing
@@ -38,12 +35,12 @@ public final class PCAPDevice {
     ///  - file: Name of the file to open
     @inlinable
     public init(file: UnsafePointer<CChar>? = nil) throws {
-        guard let ptr = errorBuffer.withUnsafeMutableBufferPointer({ (buffer: inout UnsafeMutableBufferPointer<CChar>) -> UnsafeMutablePointer<pcap_t>? in
-            pcap_open_offline(file, buffer.baseAddress)
-        }) else {
-            throw PCAPError(errorBuffer)
+        handle = try withUnsafeTemporaryAllocation(of: CChar.self, capacity: Int(PCAP_ERRBUF_SIZE)+1) { buffer in
+            guard let ptr = pcap_open_offline(file, buffer.baseAddress) else {
+                throw PCAPError(buffer.baseAddress)
+            }
+            return ptr
         }
-        handle = ptr
     }
 
     /// Compile a filter expression
