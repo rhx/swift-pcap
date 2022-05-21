@@ -80,4 +80,14 @@ public final class PCAPDevice {
         guard let handle = handle else { return }
         pcap_close(handle)
     }
+
+    /// Find all devices
+    @inlinable public static func findAllDevices() throws -> InterfaceList {
+        let list = InterfaceList()
+        var errorBuffer = [CChar](repeating: 0, count: Int(PCAP_ERRBUF_SIZE)+1)
+        guard pcap_findalldevs(&list.interfaces, &errorBuffer) == 0 else {
+            throw PCAPError(errorBuffer)
+        }
+        return list
+    }
 }
