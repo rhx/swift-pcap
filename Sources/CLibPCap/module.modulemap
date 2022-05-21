@@ -1,0 +1,7 @@
+module CLibPCap [system]
+{
+    header "pcap-bridging.h"
+    link "pcap"
+    export *
+}
+
