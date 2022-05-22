@@ -10,10 +10,16 @@ import CLibPCap
 public final class PCAPDevice {
     /// The underlying `libpcap` handle
     public var handle: UnsafeMutablePointer<pcap_t>! = nil
-    /// The underlying error
+    /// Discription of the last error that ocurred
     @inlinable
     public var error: PCAPError { PCAPError(pcap_geterr(handle)) }
-
+    /// The current processing statistics
+    @inlinable
+    public var statistics: Statistics? {
+        var statistics = Statistics()
+        guard pcap_stats(handle, &statistics.stats) == 0 else { return nil }
+        return statistics
+    }
     /// Open a device for live capturing
     /// - Parameters:
     ///   - device: Name of the interface to open, capturing on all interfaces if`nil`
