@@ -163,6 +163,16 @@ public final class PCAPDevice {
         return (header, UnsafeBufferPointer(start: data, count: header.count))
     }
 
+    /// Send a packet
+    /// - Parameters:
+    ///  - packet: The packet to inject
+    /// - Returns: The number of bytes sent, or `nil` if unsuccessful
+    @inlinable
+    public func inject(packet: UnsafeRawBufferPointer) -> Int? {
+        let n = pcap_inject(handle, packet.baseAddress, size_t(packet.count))
+        return n >= 0 ? Int(n) : nil
+    }
+
     /// Find all devices
     @inlinable public static func findAllDevices() throws -> InterfaceList {
         let list = InterfaceList()
