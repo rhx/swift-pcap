@@ -25,12 +25,16 @@ public struct PacketHeader: CustomStringConvertible {
     /// A textual description of the address
     @inlinable
     public var description: String {
+        #if os(macOS)
         var hdr = pcapHeader
         return withUnsafePointer(to: &hdr) {
             $0.withMemoryRebound(to: CChar.self, capacity: MemoryLayout<pcap_pkthdr>.size) {
                 String(cString: $0 + MemoryLayout<pcap_pkthdr>.offset(of: \.comment)!)
             }
         }
+        #else
+        "\(count) of \(size) bytes"
+        #endif
     }
 
     /// Length of the portion present
