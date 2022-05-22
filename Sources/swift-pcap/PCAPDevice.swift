@@ -8,17 +8,6 @@ import CLibPCap
 
 /// Representation of the underlying Packet capturing device
 public final class PCAPDevice {
-    /// Return status of `dispatch` or `loop`
-    public enum Status {
-        /// Processing completed successfully
-        case completed
-        /// Processing was interrupted
-        case interrupted
-        /// Dispatch was interrupted, with the given number of packets processed
-        case partial(completed: Int)
-        /// An error ocurred
-        case error(PCAPError)
-    }
     /// The underlying `libpcap` handle
     public var handle: UnsafeMutablePointer<pcap_t>! = nil
     /// The underlying error
