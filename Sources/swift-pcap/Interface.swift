@@ -32,7 +32,7 @@ public struct Interface: CustomStringConvertible {
         public static let wireless = Flags(PCAP_IF_WIRELESS)
     }
     /// A pointer to the underlying PCAP interface type
-    public var pcapInterface: UnsafeMutablePointer<pcap_if_t>
+    public let pcapInterface: UnsafeMutablePointer<pcap_if_t>
 
     /// Designated initialiser
     /// - Parameter interface: The interface pointer to wrap
@@ -62,6 +62,12 @@ public struct Interface: CustomStringConvertible {
         pcapInterface.pointee.name.map {
             String(cString: $0)
         } ?? ""
+    }
+
+    /// The addresses associated with this interface
+    @inlinable
+    public var addresses: AddressList {
+        AddressList(pcapInterface.pointee.addresses)
     }
 
     /// The next interface in the list
