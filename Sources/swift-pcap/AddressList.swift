@@ -7,7 +7,7 @@
 import CLibPCap
 
 /// A class representing a list of interfaces
-public final class AddressList: Sequence {
+public struct AddressList: Sequence {
     /// Address sequence iterator
     public struct Iterator: IteratorProtocol {
         /// Pointer to the current element
