@@ -8,6 +8,17 @@ import CLibPCap
 
 /// Representation of the underlying Packet capturing device
 public final class PCAPDevice {
+    /// Return status of `dispatch` or `loop`
+    public enum Status {
+        /// Processing completed successfully
+        case completed
+        /// Processing was interrupted
+        case interrupted
+        /// Dispatch was interrupted, with the given number of packets processed
+        case partial(completed: Int)
+        /// An error ocurred
+        case error(PCAPError)
+    }
     /// The underlying `libpcap` handle
     public var handle: UnsafeMutablePointer<pcap_t>! = nil
     /// The underlying error
@@ -43,6 +54,11 @@ public final class PCAPDevice {
         }
     }
 
+    deinit {
+        guard let handle = handle else { return }
+        pcap_close(handle)
+    }
+
     /// Compile a filter expression
     /// - Parameters:
     ///  - expression: The filter expression to compile
@@ -73,9 +89,75 @@ public final class PCAPDevice {
         pcap_perror(handle, prefix)
     }
 
-    deinit {
-        guard let handle = handle else { return }
-        pcap_close(handle)
+
+    /// Loop through the packets in the capture file
+    /// - Parameters:
+    ///  - count: The number of packets to process, `-1` for no limit
+    ///  - callback: The callback to call for each packet
+    /// - Returns: `0` if the count was reached, `-1` if an error occurred, or `-2` if the loop was interrupted
+    /// - Note: This function does not return when live read timeouts occur
+    @usableFromInline
+    func loop(count: Int32, holder: HandlerClosureHolder, cHandler: @escaping pcap_handler) -> Status {
+        let userData = Unmanaged.passRetained(holder).toOpaque().assumingMemoryBound(to: u_char.self)
+        let value = pcap_loop(handle, count, cHandler, UnsafeMutablePointer(mutating: userData))
+        switch value {
+        case 0:  return .completed
+        case -1: return .error(error)
+        case -2: return .interrupted
+        default: return .partial(completed: Int(value))
+        }
+    }
+
+    /// Loop through the packets in the capture file
+    /// - Parameters:
+    ///  - count: The number of packets to process, `nil` for no limit
+    ///  - callback: The callback to call for each packet
+    /// - Returns: The number of packets processed
+    /// - Note: This function does not return when live read timeouts occur
+    @inlinable
+    public func loop(count: Int? = nil, callback: @escaping Handler) -> Status {
+        loop(count: Int32(count ?? -1), holder: HandlerClosureHolder(callback)) {
+            guard let holder = $0.map({ Unmanaged<HandlerClosureHolder>.fromOpaque($0).takeUnretainedValue() }),
+                  let header = $1.map(PacketHeader.init) else { return }
+            holder.callback(header, UnsafeBufferPointer(start: $2, count: header.count))
+        }
+    }
+
+    /// Dispatch callback for each packet
+    /// - Parameters:
+    ///  - count: The number of packets to process, `-1` for no limit
+    ///  - callback: The callback to call for each packet
+    /// - Returns: The number of packets processed
+    @usableFromInline
+    func dispatch(count: Int32, holder: HandlerClosureHolder, cHandler: @escaping pcap_handler) -> Status {
+        let userData = Unmanaged.passRetained(holder).toOpaque().assumingMemoryBound(to: u_char.self)
+        let value = pcap_dispatch(handle, count, cHandler, UnsafeMutablePointer(mutating: userData))
+        switch value {
+        case 0:  return .completed
+        case -1: return .error(error)
+        case -2: return .interrupted
+        default: return .partial(completed: Int(value))
+        }
+    }
+
+    /// Dispatch callback for each packet
+    /// - Parameters:
+    ///  - count: The number of packets to process, `nil` for no limit
+    ///  - callback: The callback to call for each packet
+    /// - Returns: The number of packets processed
+    @inlinable
+    public func dispatch(count: Int? = nil, callback: @escaping Handler) -> Status {
+        dispatch(count: Int32(count ??  -1), holder: HandlerClosureHolder(callback)) {
+            guard let holder = $0.map({ Unmanaged<HandlerClosureHolder>.fromOpaque($0).takeUnretainedValue() }),
+                  let header = $1.map(PacketHeader.init) else { return }
+            holder.callback(header, UnsafeBufferPointer(start: $2, count: header.count))
+        }
+    }
+
+    /// Break out of a `loop` or `dispatch` call
+    @inlinable
+    public func breakLoop() {
+        pcap_breakloop(handle)
     }
 
     /// Find all devices

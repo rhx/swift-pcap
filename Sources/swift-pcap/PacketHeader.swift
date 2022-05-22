@@ -9,12 +9,12 @@ import CLibPCap
 /// Representation of a packet header interface
 public struct PacketHeader: CustomStringConvertible {
     /// A pointer to the underlying PCAP address type
-    public let pcapHeader: UnsafeMutablePointer<pcap_pkthdr>
+    public let pcapHeader: UnsafePointer<pcap_pkthdr>
 
     /// Designated initialiser
     /// - Parameter header: The header pointer to wrap
     @inlinable
-    public init(_ header: UnsafeMutablePointer<pcap_pkthdr>) {
+    public init(_ header: UnsafePointer<pcap_pkthdr>) {
         pcapHeader = header
     }
 
