@@ -20,6 +20,13 @@ public final class PCAPDevice {
         guard pcap_stats(handle, &statistics.stats) == 0 else { return nil }
         return statistics
     }
+    /// The current snapshot length
+    @inlinable
+    public var snapshotLength: Int {
+        get { Int(pcap_snapshot(handle)) }
+        set { pcap_set_snaplen(handle, Int32(newValue)) }
+    }
+
     /// Open a device for live capturing
     /// - Parameters:
     ///   - device: Name of the interface to open, capturing on all interfaces if`nil`
