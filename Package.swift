@@ -8,7 +8,7 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "swift-pcap",
-            targets: ["swift-pcap"]),
+            targets: ["PCAP"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -22,10 +22,10 @@ let package = Package(
                 .apt(["libpcap-dev"])
             ]),
         .target(
-            name: "swift-pcap",
+            name: "PCAP",
             dependencies: ["CLibPCap"]),
         .testTarget(
             name: "swift-pcapTests",
-            dependencies: ["swift-pcap"]),
+            dependencies: ["PCAP"]),
     ]
 )

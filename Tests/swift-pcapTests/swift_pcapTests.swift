@@ -1,7 +1,7 @@
 import XCTest
-@testable import swift_pcap
+@testable import PCAP
 
-final class swift_pcapTests: XCTestCase {
+final class PCAPTests: XCTestCase {
     func testDevices() throws {
         let list = try PCAPDevice.findAllDevices()
         XCTAssertNotNil(list.interfaces)
