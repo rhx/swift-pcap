@@ -116,7 +116,7 @@ public final class PCAPDevice {
     ///  - callback: The callback to call for each packet
     /// - Returns: The number of packets processed
     /// - Note: This function does not return when live read timeouts occur
-    @inlinable
+    @discardableResult @inlinable
     public func loop(count: Int? = nil, callback: @escaping Handler) -> Status {
         loop(count: Int32(count ?? -1), holder: HandlerClosureHolder(callback)) {
             guard let holder = $0.map({ Unmanaged<HandlerClosureHolder>.fromOpaque($0).takeUnretainedValue() }),
@@ -147,7 +147,7 @@ public final class PCAPDevice {
     ///  - count: The number of packets to process, `nil` for no limit
     ///  - callback: The callback to call for each packet
     /// - Returns: The number of packets processed
-    @inlinable
+    @discardableResult @inlinable
     public func dispatch(count: Int? = nil, callback: @escaping Handler) -> Status {
         dispatch(count: Int32(count ??  -1), holder: HandlerClosureHolder(callback)) {
             guard let holder = $0.map({ Unmanaged<HandlerClosureHolder>.fromOpaque($0).takeUnretainedValue() }),
