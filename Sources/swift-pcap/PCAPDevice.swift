@@ -155,6 +155,14 @@ public final class PCAPDevice {
         pcap_breakloop(handle)
     }
 
+    /// Get the next packet
+    @inlinable
+    public func next() -> (header: PacketHeader, content: UnsafeBufferPointer<UInt8>)? {
+        var header = PacketHeader()
+        guard let data = pcap_next(handle, &header.pcapHeader) else { return nil }
+        return (header, UnsafeBufferPointer(start: data, count: header.count))
+    }
+
     /// Find all devices
     @inlinable public static func findAllDevices() throws -> InterfaceList {
         let list = InterfaceList()
